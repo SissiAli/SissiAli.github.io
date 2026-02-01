@@ -1,0 +1,243 @@
+import os
+
+path = "C:/Users/siria/OneDrive/Desktop/Kepler"
+files = os.listdir(path)
+print(files)
+
+fits_files = [f for f in files if f.endswith(".fits")]
+print(fits_files)
+
+fits_files = [f for f in files if f.lower().endswith(".fits")]
+
+for folder in os.listdir(path):
+    sub_path = os.path.join(path, folder)
+    if os.path.isdir(sub_path):
+        print(f"Checking folder: {sub_path}")
+        for file in os.listdir(sub_path):
+            if file.lower().endswith(".fits"):
+                print(os.path.join(sub_path, file))
+
+                import zipfile
+import os
+
+# Set the path to your Kepler folder
+folder_path = "C:/Users/siria/OneDrive/Desktop/Kepler"
+
+# Loop through all files in the folder
+for file in os.listdir(folder_path):
+    if file.endswith(".zip"):
+        zip_path = os.path.join(folder_path, file)
+        # Extract to the same folder
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(folder_path)
+
+print(" All .zip files have been extracted.")
+
+import zipfile
+import os
+
+# Path to the Kepler folder on your Desktop
+path = "C:/Users/siria/OneDrive/Desktop/Kepler"
+
+# Loop through files in the folder
+for file in os.listdir(path):
+    if file.endswith(".fits.zip"):
+        zip_path = os.path.join(path, file)
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(path)
+                print(f"Extracted: {file}")
+        except zipfile.BadZipFile:
+            print(f"Error: Couldn't extract {file} — possibly corrupted.")
+
+            import os
+from astropy.io import fits
+
+# Define the correct path
+path = "C:/Users/siria/OneDrive/Desktop/anaconda"
+
+# Recursively find all .fits files
+fits_files = []
+for root, dirs, files in os.walk(path):
+    for file in files:
+        if file.endswith(".fits"):
+            fits_files.append(os.path.join(root, file))
+
+# Check how many were found
+print(f"Found {len(fits_files)} FITS files.")
+print("First few files:")
+for f in fits_files[:5]:
+    print(f)
+
+# If files exist, open the first one and show basic info
+if fits_files:
+    file_path = fits_files[0]
+    hdul = fits.open(file_path)
+    hdul.info()
+else:
+    print("No FITS files found.")
+
+    # Show column names in the light curve table
+hdul[1].columns.names
+
+['TIME', 'SAP_FLUX', 'SAP_FLUX_ERR', 'QUALITY', ...]
+
+from astropy.io import fits
+
+# Open the file and print the structure
+hdul = fits.open(file_path)
+hdul.info()
+hdul.close()
+
+from astropy.io import fits
+
+hdul = fits.open(file_path)
+data = hdul[1].data  # Try extension 1; change to [0] if needed
+
+print(data.columns.names)  # See what columns exist
+hdul.close()
+
+
+from astropy.io import fits
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# Path to your folder
+path = "C:/Users/siria/OneDrive/Desktop/anaconda"
+
+# Get FITS files
+fits_files = [f for f in os.listdir(path) if f.endswith(".fits")]
+file_path = os.path.join(path, fits_files[0])
+
+# Open FITS
+hdul = fits.open(file_path)
+data = hdul[1].data
+
+# Extract time and pixel flux cube
+time = data['TIME']                # shape (476,)
+flux_cube = data['FLUX']            # shape (476, 10, 12)
+
+print("Time shape:", time.shape)
+print("Flux cube shape:", flux_cube.shape)
+
+# Collapse pixels into a light curve
+flux = np.nansum(flux_cube, axis=(1, 2))  # sum over pixels
+
+# Clean NaNs
+mask = np.isfinite(time) & np.isfinite(flux)
+time = time[mask]
+flux = flux[mask]
+
+# Plot
+plt.figure(figsize=(10,4))
+plt.plot(time, flux, '.k', markersize=2)
+plt.xlabel("Time (BJD - 2454833)")
+plt.ylabel("Summed Flux")
+plt.title("Kepler Light Curve (from Target Pixel Data)")
+plt.grid(True)
+plt.show()
+
+hdul.close()
+
+# Remove outliers based on flux
+mask = (flux > 0) & (flux < 1e6) & np.isfinite(flux) & np.isfinite(time)
+time_clean = time[mask]
+flux_clean = flux[mask]
+
+plt.figure(figsize=(10,5))
+plt.plot(time_clean, flux_clean, '.k', markersize=2)
+plt.xlabel("Time (BJD - 2454833)")
+plt.ylabel("Summed Flux")
+plt.title("Cleaned Kepler Light Curve")
+plt.grid(True)
+plt.show()
+
+from astropy.io import fits
+import numpy as np
+import os
+
+path = "C:/Users/siria/OneDrive/Desktop/anaconda"
+fits_files = [f for f in os.listdir(path) if f.endswith(".fits")]
+
+combined_time = []
+combined_flux = []
+
+for file in fits_files:
+    file_path = os.path.join(path, file)
+    
+    with fits.open(file_path) as hdul:
+        data = hdul[1].data
+        
+        time = data['TIME']
+        flux = data['FLUX']          # (476, 10, 12)
+
+        # Convert pixel data → total flux
+        flux_1d = np.nansum(flux, axis=(1, 2))  # (476,)
+
+        # Clean NaNs
+        mask = np.isfinite(time) & np.isfinite(flux_1d)
+
+        combined_time.append(time[mask])
+        combined_flux.append(flux_1d[mask])
+
+# Merge all files
+combined_time = np.concatenate(combined_time)
+combined_flux = np.concatenate(combined_flux)
+
+print("Final combined points:", len(combined_time))
+
+import numpy as np
+from astropy.io import fits
+import os
+
+# Folder containing your 18 FITS files
+path = "C:/Users/siria/OneDrive/Desktop/anaconda"
+
+all_times = []
+all_fluxes = []
+
+for file in os.listdir(path):
+    if file.endswith(".fits"):
+        with fits.open(os.path.join(path, file)) as hdul:
+            data = hdul[1].data
+            time = data['TIME']
+            flux = np.nansum(data['FLUX'], axis=(1, 2))  # collapse 2D flux to 1D
+            mask = np.isfinite(time) & np.isfinite(flux)
+            all_times.append(time[mask])
+            all_fluxes.append(flux[mask])
+
+time_all = np.concatenate(all_times)
+flux_all = np.concatenate(all_fluxes)
+
+print("Loaded", len(all_times), "FITS files.")
+print("Time span (days):", np.max(time_all) - np.min(time_all))
+
+
+print("Loaded 18 FITS files.")
+
+# Normalize the combined flux using median
+normalized_flux = flux_all / np.median(flux_all)
+
+from astropy.timeseries import BoxLeastSquares
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Run BLS to search for transit signals
+model = BoxLeastSquares(time_all, normalized_flux)
+
+# Define a period grid: search between 0.5 and 20 days (adjust as needed)
+periods = np.linspace(0.5, 20, 10000)  
+duration = 0.1  # assumed duration of a transit, in days
+
+# Compute BLS power
+results = model.power(periods, duration)
+
+# Plot the BLS periodogram
+plt.figure(figsize=(10, 5))
+plt.plot(results.period, results.power, color='black')
+plt.xlabel("Period (days)")
+plt.ylabel("BLS Power")
+plt.title("Box Least Squares Periodogram")
+plt.grid(True)
+plt.show()
